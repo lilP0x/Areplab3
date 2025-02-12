@@ -14,7 +14,6 @@ import java.util.Map;
 import org.example.annotations.GetMapping;
 import org.example.annotations.RequestParam;
 import org.example.annotations.RestController;
-
 public class FileReader {
     
     private final Map<String, Method> routeMappings = new HashMap<>();
@@ -114,8 +113,6 @@ public class FileReader {
 
         if (method.equals("GET")) {
             handleGetRequest(file, out); 
-        } else if (method.equals("POST")) {
-            handlePostRequest(file, requestBody.toString(), out);
         }
 
         out.close();
@@ -124,12 +121,14 @@ public class FileReader {
     }
 
     private void handleGetRequest(String path, OutputStream out) throws Exception {
-        Method handlerMethod = routeMappings.get(path);
 
+        Method handlerMethod = routeMappings.get(path);
+        System.out.println(handlerMethod);
+        
         if (handlerMethod != null) {
             Object controller = controllers.get("org.example.controller.LabController");
 
-            String name = "world"; 
+            String name = "world";  
 
             if (path.contains("?")) {
                 String queryString = path.split("\\?")[1];
@@ -157,28 +156,5 @@ public class FileReader {
             writer.println();
             writer.println("Error 404: Endpoint no encontrado");
         }
-    }
-
-    private void handlePostRequest(String path, String body, OutputStream output) throws IOException {
-        PrintWriter writer = new PrintWriter(output, true);
-
-        if ("/save".equals(path)) {
-            System.out.println("Datos recibidos en POST: " + body);
-
-            String response = "{ \"message\": \"Datos guardados correctamente\" }";
-
-            writer.println("HTTP/1.1 201 OK");
-            writer.println("Content-Type: application/json");
-            writer.println("Content-Length: " + response.length());
-            writer.println();
-            writer.println(response);
-        } else {
-            writer.println("HTTP/1.1 404 Not Found");
-            writer.println("Content-Type: text/plain");
-            writer.println();
-            writer.println("Error 404: Endpoint no encontrado");
-        }
-
-        writer.flush();
     }
 }
