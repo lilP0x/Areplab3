@@ -15,7 +15,16 @@ public class LabController {
     }
 
     @GetMapping("/app/add")
-    public String add(String value){
-        return Double.toString(Math.PI);
+    public String add(@RequestParam(value = "value") int value, 
+                      @RequestParam(value = "value2") int value2) {
+        return String.valueOf(value + value2);
     }
+
+
+    @GetMapping("/app/sub")
+    public String prime(@RequestParam(value = "value") int value, 
+                      @RequestParam(value = "value2") int value2) {
+        return String.valueOf(value - value2);
+    }
+
 }

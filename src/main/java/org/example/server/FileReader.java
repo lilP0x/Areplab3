@@ -7,10 +7,7 @@ import java.lang.reflect.Parameter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.example.annotations.GetMapping;
 import org.example.annotations.RequestParam;
@@ -26,21 +23,18 @@ public class FileReader {
         loadComponents("org.example.annotations");
     }
 
-    public void loadComponents(String pathPack) {
+    private void loadComponents(String packagePath) {
         try {
-            List<Class<?>> classes = findAllClasses(pathPack);
-
+            List<Class<?>> classes = findAllClasses(packagePath);
             for (Class<?> c : classes) {
-                if (hasAnnotation(c, RestController.class)) {
-                    System.out.println("Cargando controlador: " + c.getName());
+                if (c.isAnnotationPresent(RestController.class)) {
                     Object instance = c.getDeclaredConstructor().newInstance();
                     controllers.put(c.getName(), instance);
-
                     for (Method method : c.getDeclaredMethods()) {
                         if (method.isAnnotationPresent(GetMapping.class)) {
                             String route = method.getAnnotation(GetMapping.class).value();
                             routeMappings.put(route, method);
-                            System.out.println("Registrando ruta GET: " + route);
+                            System.out.println("Ruta registrada: " + route);
                         }
                     }
                 }
@@ -73,10 +67,6 @@ public class FileReader {
         return classes;
     }
 
-    private boolean hasAnnotation(Class<?> c, Class<? extends Annotation> annotation) {
-        return c.isAnnotationPresent(annotation);
-    }
-
     public void handleRequest(ServerSocket socket, Socket clientSocket) throws Exception {
         OutputStream out = clientSocket.getOutputStream();
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -85,8 +75,6 @@ public class FileReader {
         boolean isFirstLine = true;
         String file = "";
         String method = "";
-        StringBuilder requestBody = new StringBuilder();
-        boolean isPost = false;
 
         while ((inputLine = in.readLine()) != null) {
             if (isFirstLine) {
@@ -94,32 +82,18 @@ public class FileReader {
                 method = requestParts[0];
                 file = requestParts[1];
                 isFirstLine = false;
-                System.out.println(requestParts);
-
-               
             }
 
-            if (isPost && inputLine.isEmpty()) {
-                while (in.ready()) {
-                    requestBody.append((char) in.read());
-                }
-                break;
-            }
-
-            System.out.println("Received: " + inputLine);
             if (!in.ready()) {
                 break;
             }
         }
 
         URI requestFile = new URI(file);
-        String filePath = requestFile.getPath(); 
-
-         
+        String filePath = requestFile.getPath().replaceAll("/$", ""); 
         if (method.equals("GET") && filePath.startsWith("/app")) {
             handleGetRequest(file, out);
         } else {
-            filePath = filePath.substring(1);
             serveFile(filePath, out);
         }
 
@@ -129,24 +103,18 @@ public class FileReader {
     }
 
     private void handleGetRequest(String path, OutputStream out) throws Exception {
-        System.out.println("Request Path: " + path);
+        System.out.println("Solicitud recibida en: " + path);
 
-        String route = path.split("\\?")[0];
-        System.out.println();
-
+        String route = path.split("\\?")[0].replaceAll("/$", ""); // 🔥 Corrige la clave
         Method handlerMethod = routeMappings.get(route);
-
-        System.out.println(handlerMethod);
 
         if (handlerMethod != null) {
             Object controller = controllers.get(handlerMethod.getDeclaringClass().getName());
 
             Map<String, String> queryParams = new HashMap<>();
-
             if (path.contains("?")) {
                 String queryString = path.split("\\?")[1];
-                String[] params = queryString.split("&");
-                for (String param : params) {
+                for (String param : queryString.split("&")) {
                     String[] keyValue = param.split("=");
                     if (keyValue.length == 2) {
                         queryParams.put(keyValue[0], keyValue[1]);
@@ -154,7 +122,6 @@ public class FileReader {
                 }
             }
 
-            // Obtener parámetros del método
             Parameter[] parameters = handlerMethod.getParameters();
             Object[] args = new Object[parameters.length];
 
@@ -164,7 +131,13 @@ public class FileReader {
 
                 if (requestParam != null) {
                     String paramName = requestParam.value();
-                    args[i] = queryParams.getOrDefault(paramName, "default");
+                    String paramValue = queryParams.get(paramName);
+
+                    if (param.getType().equals(int.class) && paramValue != null) {
+                        args[i] = Integer.parseInt(paramValue);
+                    } else {
+                        args[i] = paramValue;
+                    }
                 }
             }
 
@@ -186,44 +159,22 @@ public class FileReader {
     }
 
     private static void serveFile(String filePath, OutputStream output) throws IOException {
-        boolean isError = false;
         InputStream fileStream = FileReader.class.getClassLoader().getResourceAsStream(filePath);
+        boolean isError = (fileStream == null);
 
-        if (fileStream == null) {
+        if (isError) {
             fileStream = FileReader.class.getClassLoader().getResourceAsStream("400badrequest.html");
-            isError = true;
         }
 
         byte[] fileBytes = fileStream.readAllBytes();
-        String contentType = "application/octet-stream";
-
-        if (filePath.endsWith(".html")) {
-            contentType = "text/html";
-        } else if (filePath.endsWith(".png")) {
-            contentType = "image/png";
-        } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
-            contentType = "image/jpeg";
-        } else if (filePath.endsWith(".gif")) {
-            contentType = "image/gif";
-        } else if (filePath.endsWith(".css")) {
-            contentType = "text/css";
-        } else if (filePath.endsWith(".js")) {
-            contentType = "application/javascript";
-        }
+        String contentType = "text/plain";
 
         PrintWriter writer = new PrintWriter(output, true);
-        if (isError) {
-            writer.println("HTTP/1.1 400 Bad Request");
-            contentType = "text/html";
-        } else {
-            writer.println("HTTP/1.1 200 OK");
-        }
-
+        writer.println(isError ? "HTTP/1.1 400 Bad Request" : "HTTP/1.1 200 OK");
         writer.println("Content-Type: " + contentType);
         writer.println("Content-Length: " + fileBytes.length);
         writer.println();
         output.write(fileBytes);
         output.flush();
     }
-
 }

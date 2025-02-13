@@ -17,7 +17,11 @@ public class GreetingController {
     }
 
     @GetMapping("/app/pi")
-    public String pi(String value){
+    public String pi(){
         return Double.toString(Math.PI);
     }
+
+    
+
+
 }
