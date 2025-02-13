@@ -11,12 +11,12 @@ public class GreetingController {
     private  static final String template = "Hello, %s!";
     private final AtomicLong counter = new AtomicLong();
 
-    @GetMapping("/greeting")
+    @GetMapping("/app/greeting")
     public String greeting(@RequestParam(value = "name", defaultValue = "world") String name){
         return "Hola" + name;
     }
 
-    @GetMapping("/pi")
+    @GetMapping("/app/pi")
     public String pi(String value){
         return Double.toString(Math.PI);
     }

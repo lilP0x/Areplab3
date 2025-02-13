@@ -9,12 +9,12 @@ import org.example.annotations.RestController;
 public class LabController {
     
 
-    @GetMapping("/hi")
+    @GetMapping("/app/hi")
     public String gr(@RequestParam(value = "name", defaultValue = "world") String name){
         return "Hola" + name;
     }
 
-    @GetMapping("/add")
+    @GetMapping("/app/add")
     public String add(String value){
         return Double.toString(Math.PI);
     }
