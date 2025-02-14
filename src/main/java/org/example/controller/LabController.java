@@ -11,6 +11,9 @@ public class LabController {
 
     @GetMapping("/app/hi")
     public String gr(@RequestParam(value = "name", defaultValue = "world") String name){
+        if (name == null){
+            name = "world";
+        }
         return "Hola" + name;
     }
 

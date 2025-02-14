@@ -13,6 +13,7 @@ public class GreetingController {
 
     @GetMapping("/app/greeting")
     public String greeting(@RequestParam(value = "name", defaultValue = "world") String name){
+        
         return "Hola" + name;
     }
 

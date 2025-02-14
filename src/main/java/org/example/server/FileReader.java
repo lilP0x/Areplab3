@@ -177,4 +177,10 @@ public class FileReader {
         output.write(fileBytes);
         output.flush();
     }
+
+
+    public Map<String, Method> getRouteMappings() {
+        return routeMappings;
+    }
+    
 }

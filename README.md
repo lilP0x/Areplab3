@@ -1,98 +1,82 @@
-# Taller diseño y estructuración de aplicaciones distribuidas en internet
+# Proyecto: Servidor Web en Java con Framework 
 
-Este proyecto es un servidor web simple implementado en Java que permite manejar múltiples solicitudes HTTP de forma secuencial (no concurrente). El servidor puede servir archivos HTML, CSS, JavaScript e imágenes desde el disco local y manejar solicitudes REST como el método POST.
+## Descripción
+Este proyecto consiste en la implementación de un servidor web simple en Java que soporta la entrega de páginas HTML e imágenes PNG, javascript. Además, proporciona un mini framework que permite la construcción de aplicaciones web a partir de POJOs utilizando anotaciones personalizadas similares a Spring Boot.
 
-##  Características del Servidor
-- Escucha en el puerto `35000`.
-- Atiende solicitudes HTTP GET para servir archivos estáticos (`.html`, `.css`, `.js`, `.png`, `.jpg`, `.gif`).
-- Soporta solicitudes HTTP POST para recibir datos desde un cliente web.
-- No usa frameworks web como Spring.
-- Implementado usando solo Java y las librerías estándar de manejo de red.
+El servidor soporta peticiones GET y permite definir controladores con rutas personalizadas mediante las anotaciones `@RestController`, `@GetMapping` y `@RequestParam`.
+
+## Características Principales
+- Servidor HTTP que escucha en el puerto 35000.
+- Capacidad para manejar rutas dinámicas con anotaciones.
+- Soporte para `@RestController` y `@GetMapping` para definir controladores.
+- Soporte para `@RequestParam` para recibir parámetros en las peticiones GET.
+- Descubrimiento automático de controladores en el paquete `org.example.controller`.
+
+## Requisitos
+Para ejecutar este proyecto, asegúrate de tener instalados los siguientes componentes:
+- **Java 21** (o compatible con tu entorno).
+- **Maven** (para la gestión de dependencias y compilación del proyecto).
 
 ## Estructura del Proyecto
 ```
- src/main/java/org/example/
-    ├── HttpServer.java       # Clase principal, inicia el servidor
-    ├── FileReader.java       # Maneja las solicitudes HTTP y entrega archivos
- src/main/resources/
-    ├── index.html            # Página web de prueba
-    ├── styles.css            # Estilos para la aplicación web
-    ├── script.js             # Lógica en JavaScript para la interacción
-    ├── laminemipapa.png            # Imagen de prueba para verificar el servidor
+|-- src/main/java/org/example
+|   |-- annotations/   # Anotaciones personalizadas (@RestController, @GetMapping, @RequestParam)
+|   |-- controller/    # Controladores de ejemplo
+|   |-- server/        # Implementación del servidor y manejador de rutas
+|-- pom.xml           # Archivo de configuración de Maven
 ```
 
-## 1 Instalación y Ejecución
-### Clonar el repositorio
+## Instalación y Ejecución
+### 1. Clonar el Repositorio
 ```sh
-git clone https://github.com/lilP0x/Areplab1.git
+$ git clone https://github.com/lilP0x/Areplab3
 ```
 
-### 2️ Compilar el servidor
+### 2. Compilar el Proyecto
 ```sh
-mvn clean package
+$ mvn clean package
 ```
 
-### 3️ Ejecutar el servidor
+### 3. Ejecutar el Servidor
 ```sh
-java -cp target/classes org.example.HttpServer
+$ java -cp target/classes org.example.server.HttpServer
 ```
+El servidor quedará escuchando en el puerto **35000**.
 
-![alt text](/src/main/resources/readmeImages/image-2.png)
-
-##  Pruebas y Evaluación
-###  Pruebas Manuales
-1. **Abrir el navegador y acceder al servidor**
-   - `http://localhost:35000/index.html` → Debe mostrar la página web de prueba.
-   - `http://localhost:35000/styles.css` → Debe devolver la hoja de estilos.
-   - `http://localhost:35000/script.js` → Debe devolver el script JavaScript.
-   - `http://localhost:35000/laminemipapa.png` → Debe mostrar la imagen.
-
-2. **Enviar una solicitud POST desde la consola**
+### 4. Probar Endpoints
+#### Saludo Simple:
 ```sh
-curl -X POST -d "data=hello" http://localhost:35000/save
+http://localhost:35000/app/hi?name=Juan
 ```
-   - Respuesta esperada: `{"message": "Datos guardados correctamente"}`
+**Respuesta:**
+```
+Hola Juan
+```
 
-3. **Solicitar un archivo inexistente**
-   - `http://localhost:35000/noexist.html` → Debe devolver un error `400 Bad Request`.
-
-###  Pruebas Automatizadas
-Se ejecutaron pruebas unitarias utilizando `JUnit` verificando:
-- La correcta respuesta a archivos existentes y no existentes.
-- El manejo de solicitudes POST.
-
-
-para ejecutarlas tendrea que ejecutar el siguiente comando desde la terminal 
+#### Suma de Dos Valores:
 ```sh
-mvn test
+http://localhost:35000/app/add?value=5&value2=3
+```
+**Respuesta:**
+```
+8
 ```
 
-![alt text](/src/main/resources/readmeImages/image-1.png)
+#### Resta de Dos Valores:
+```sh
+http://localhost:35000/app/sub?value=10&value2=4
+```
+**Respuesta:**
+```
+6
+```
 
+## Explicación de la Solución
+1. **Anotaciones Personalizadas**: Se definen `@RestController`, `@GetMapping` y `@RequestParam` para identificar clases y métodos que manejarán peticiones HTTP.
+2. **Exploración de Clases**: `FileReader` busca clases anotadas con `@RestController` y registra los métodos `@GetMapping`.
+3. **Servidor HTTP**: `HttpServer` maneja las conexiones y delega las peticiones al `FileReader`, que resuelve la ruta y ejecuta el método correspondiente.
+4. **Inyección de Dependencias Básica**: Se instancian los controladores y se invocan dinámicamente sus métodos, pasando los parámetros adecuados.
 
+---
 
-
-###  Arquitectura del Proyecto
-El servidor sigue una arquitectura basada en sockets:
-1. **`HttpServer`** inicia el servidor y espera conexiones.
-2. **`FileReader`** maneja cada solicitud entrante:
-   - Extrae la ruta del archivo solicitado.
-   - Si es un GET, busca y devuelve el archivo.
-   - Si es un POST, procesa los datos y responde en JSON.
-
-Para una mejor ejemplificacion tendremos el siguiente diagrama de arquitectura.
-
-![alt text](/src/main/resources/readmeImages/image.png)
-
-##  Conclusión
-Este proyecto demuestra cómo funciona un servidor web simple en Java sin frameworks. Permite explorar la arquitectura de aplicaciones distribuidas y la comunicación HTTP de bajo nivel.
-
-# Build With 
-
-- Maven 
-
-
-# Made by: 
-
-Juan Pablo Fernandez Gonzalez
 
